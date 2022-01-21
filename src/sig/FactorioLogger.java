@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
 
@@ -27,6 +28,7 @@ public class FactorioLogger {
 	public static void main(String[] args) {
 		String webhook_url = FileUtils.readFromFile("webhook.txt")[0];
 		int playersOnline=0;
+		List<String> onlineUsers = new ArrayList<>();
 		
 		FileReader file;
 		try {
@@ -74,14 +76,26 @@ public class FactorioLogger {
 					if (isValidMessage) {
 						String message = line.substring(lastChar);
 						if (message.contains("[JOIN]")) {
-							playersOnline++;
-							message=message+" **("+playersOnline+" player"+(playersOnline!=1?"s":"")+" online)**";
+							for (int j=0;j<onlineUsers.size();j++) {
+								if (onlineUsers.get(j).equalsIgnoreCase(message.replace(" joined the game","").replace("[JOIN] ",""))) {
+									onlineUsers.remove(j);
+									break;
+								}
+							}
+							onlineUsers.add(message.replace(" joined the game","").replace("[JOIN] ",""));
+							message=message+" **("+onlineUsers.size()+" player"+(onlineUsers.size()!=1?"s":"")+" online)**";
 						}
 						if (message.contains("[LEAVE]")) {
-							playersOnline--;
-							message=message+" **("+playersOnline+" player"+(playersOnline!=1?"s":"")+" online)**";
+							for (int j=0;j<onlineUsers.size();j++) {
+								if (onlineUsers.get(j).equalsIgnoreCase(message.replace(" left the game","").replace("[LEAVE] ",""))) {
+									onlineUsers.remove(j);
+									break;
+								}
+							}
+							message=message+" **("+onlineUsers.size()+" player"+(onlineUsers.size()!=1?"s":"")+" online)**";
 						}
-			 			PostMessage(webhook_url,message);
+						System.out.println(message);
+			 			//PostMessage(webhook_url,message);
 					}
 				} else {
 					Thread.sleep(1000);
